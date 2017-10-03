@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/CookoonAndroid.iml" filepath="$PROJECT_DIR$/CookoonAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cookoon-android.iml" filepath="$PROJECT_DIR$/cookoon-android.iml" />
     </modules>
   </component>
 </project>

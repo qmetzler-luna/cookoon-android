@@ -10,7 +10,8 @@ import com.basecamp.turbolinks.TurbolinksView;
 
 public class MainActivity extends AppCompatActivity implements TurbolinksAdapter {
     // Change the BASE_URL to an address that your VM or device can hit.
-    private static final String BASE_URL = "http://10.0.2.2:3000";
+//    private static final String BASE_URL = "http://10.0.2.2:3000";
+    private static final String BASE_URL = "https://cookoon-staging.herokuapp.com/";
     private static final String INTENT_URL = "intentUrl";
 
     private String location;
