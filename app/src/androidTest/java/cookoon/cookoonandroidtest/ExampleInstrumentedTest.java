@@ -1,4 +1,4 @@
-package cookoon.cookoonandroid;
+package cookoon.cookoonandroidtest;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

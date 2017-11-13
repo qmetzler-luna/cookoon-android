@@ -1,4 +1,4 @@
-package cookoon.cookoonandroid;
+package cookoon.cookoonandroidtest;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.net.Uri;
@@ -24,8 +23,8 @@ import com.basecamp.turbolinks.TurbolinksView;
 
 public class MainActivity extends AppCompatActivity implements TurbolinksAdapter {
     // Change the BASE_URL to an address that your VM or device can hit.
-//    private static final String BASE_URL = "https://cookoon-staging.herokuapp.com/";
-    private static final String BASE_URL = "https://app.cookoon.fr/";
+    private static final String BASE_URL = "https://cookoon-staging.herokuapp.com/";
+//    private static final String BASE_URL = "https://app.cookoon.fr/";
     private static final String INTENT_URL = "intentUrl";
 
     private Boolean mUploadingFile = false;

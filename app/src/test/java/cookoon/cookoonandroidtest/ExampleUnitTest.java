@@ -1,4 +1,4 @@
-package cookoon.cookoonandroid;
+package cookoon.cookoonandroidtest;
 
 import org.junit.Test;
 
