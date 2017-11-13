@@ -1,8 +1,22 @@
 package cookoon.cookoonandroid;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.os.Environment;
+import android.annotation.SuppressLint;
 
 import com.basecamp.turbolinks.TurbolinksSession;
 import com.basecamp.turbolinks.TurbolinksAdapter;
@@ -14,8 +28,16 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     private static final String BASE_URL = "https://app.cookoon.fr/";
     private static final String INTENT_URL = "intentUrl";
 
+    private Boolean mUploadingFile = false;
+    private String mCM;
+    private ValueCallback<Uri> mUploadMessage;
+    private ValueCallback<Uri[]> mUploadMessageArray;
+    private final static int FCR = 1;
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     private String location;
     private TurbolinksView turbolinksView;
+    private WebView webView;
 
     // -----------------------------------------------------------------------
     // Activity overrides
@@ -26,15 +48,77 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        TurbolinksSession.getDefault(this).getWebView().getSettings().setAllowFileAccess(true);
+        webView = TurbolinksSession.getDefault(this).getWebView();
+
+
         // Find the custom TurbolinksView object in your layout
         turbolinksView = (TurbolinksView) findViewById(R.id.turbolinks_view);
 
         // For this demo app, we force debug logging on. You will only want to do
         // this for debug builds of your app (it is off by default)
-        TurbolinksSession.getDefault(this).setDebugLoggingEnabled(true);
+        // TurbolinksSession.getDefault(this).setDebugLoggingEnabled(true);
 
         // For this example we set a default location, unless one is passed in through an intent
         location = getIntent().getStringExtra(INTENT_URL) != null ? getIntent().getStringExtra(INTENT_URL) : BASE_URL;
+
+
+        // Code to open library
+        webView.setWebChromeClient(new WebChromeClient() {
+            //For Android 4.1+
+            public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("image/*");
+                MainActivity.this.startActivityForResult(
+                        Intent.createChooser(i, "Chosse your file"),
+                        MainActivity.FCR
+                );
+            }
+
+            //For Android 5.0+
+            public boolean onShowFileChooser(
+                    WebView webView, ValueCallback<Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
+                if (mUploadMessageArray != null) {
+                    mUploadMessageArray.onReceiveValue(null);
+                }
+                mUploadMessageArray = filePathCallback;
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if (takePictureIntent.resolveActivity(MainActivity.this.getPackageManager()) != null) {
+                    File photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+                        takePictureIntent.putExtra("PhotoPath", mCM);
+                    } catch (IOException ex) {
+                        Log.e(TAG, "Image file creation failed", ex);
+                    }
+                    if (photoFile != null) {
+                        mCM = "file:" + photoFile.getAbsolutePath();
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                    } else {
+                        takePictureIntent = null;
+                    }
+                }
+                Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                contentSelectionIntent.setType("image/*");
+                Intent[] intentArray;
+                if (takePictureIntent != null) {
+                    intentArray = new Intent[]{takePictureIntent};
+                } else {
+                    intentArray = new Intent[0];
+                }
+
+                Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+                chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+                chooserIntent.putExtra(Intent.EXTRA_TITLE, "Chosse your file");
+                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
+                startActivityForResult(chooserIntent, FCR);
+                return true;
+            }
+        });
+
 
         // Execute the visit
         TurbolinksSession.getDefault(this)
@@ -48,14 +132,21 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     protected void onRestart() {
         super.onRestart();
 
-        // Since the webView is shared between activities, we need to tell Turbolinks
-        // to load the location from the previous activity upon restarting
-        TurbolinksSession.getDefault(this)
-                .activity(this)
-                .adapter(this)
-                .restoreWithCachedSnapshot(true)
-                .view(turbolinksView)
-                .visit(location);
+        if (mUploadingFile == true) {
+            TurbolinksSession.getDefault(this)
+                    .activity(this)
+                    .adapter(this)
+                    .view(turbolinksView);
+        } else {
+            // Since the webView is shared between activities, we need to tell Turbolinks
+            // to load the location from the previous activity upon restarting
+            TurbolinksSession.getDefault(this)
+                    .activity(this)
+                    .adapter(this)
+                    .restoreWithCachedSnapshot(true)
+                    .view(turbolinksView)
+                    .visit(location);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -69,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
 
     @Override
     public void onReceivedError(int errorCode) {
-        handleError(errorCode);
+
     }
 
     @Override
@@ -79,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
 
     @Override
     public void requestFailedWithStatusCode(int statusCode) {
-        handleError(statusCode);
+
     }
 
     @Override
@@ -102,17 +193,10 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     // Private
     // -----------------------------------------------------------------------
 
-    // Simply forwards to an error page, but you could alternatively show your own native screen
-    // or do whatever other kind of error handling you want.
-    private void handleError(int code) {
-        if (code == 404) {
-            TurbolinksSession.getDefault(this)
-                    .activity(this)
-                    .adapter(this)
-                    .restoreWithCachedSnapshot(false)
-                    .view(turbolinksView)
-//                    TODO Changer vers le bon lien
-                    .visit(BASE_URL + "/error");
-        }
+    private File createImageFile() throws IOException {
+        @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "img_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
 }
