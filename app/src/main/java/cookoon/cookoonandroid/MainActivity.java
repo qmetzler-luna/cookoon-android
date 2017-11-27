@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     // Change the BASE_URL to an address that your VM or device can hit.
 //    private static final String BASE_URL = "https://cookoon-staging.herokuapp.com/";
     private static final String BASE_URL = "https://app.cookoon.fr/";
-    private static final String INTENT_URL = "intentUrl";
+    private static final String INTENT_URL = "https://app.cookoon.fr/";
 
     private Boolean mUploadingFile = false;
     private String mCM;
@@ -59,8 +59,16 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
         // this for debug builds of your app (it is off by default)
         // TurbolinksSession.getDefault(this).setDebugLoggingEnabled(true);
 
-        // For this example we set a default location, unless one is passed in through an intent
-        location = getIntent().getStringExtra(INTENT_URL) != null ? getIntent().getStringExtra(INTENT_URL) : BASE_URL;
+        // Need to improve this part
+        Uri appLinkData = getIntent().getData();
+        String locationWithLink = getIntent().getStringExtra(INTENT_URL);
+        if (appLinkData != null) {
+            location = INTENT_URL + appLinkData.getLastPathSegment();
+        }   else if (locationWithLink != null) {
+            location = locationWithLink;
+        } else {
+            location = BASE_URL;
+        }
 
 
         // Code to open library
@@ -185,7 +193,6 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     public void visitProposedToLocationWithAction(String location, String action) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(INTENT_URL, location);
-
         this.startActivity(intent);
     }
 
