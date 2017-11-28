@@ -30,8 +30,6 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     private static final String INTENT_URL = "intentUrl";
 
     private Boolean mUploadingFile = false;
-    private String mCM;
-    private final static int FCR = 1;
     private ValueCallback<Uri> mUploadMessage;
     public ValueCallback<Uri[]> uploadMessage;
     public static final int REQUEST_SELECT_FILE = 100;
@@ -70,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
         webView.setWebChromeClient(new WebChromeClient() {
             //For Android 4.1+
             public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+                mUploadingFile = true;
                 mUploadMessage = uploadMsg;
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -79,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
 
             //For Android 5.0+
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                mUploadingFile = true;
                 if (uploadMessage != null) {
                     uploadMessage.onReceiveValue(null);
                     uploadMessage = null;
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
     protected void onRestart() {
         super.onRestart();
 
-        if (mUploadingFile == true) {
+        if (mUploadingFile) {
             TurbolinksSession.getDefault(this)
                     .activity(this)
                     .adapter(this)
@@ -193,16 +193,5 @@ public class MainActivity extends AppCompatActivity implements TurbolinksAdapter
         intent.putExtra(INTENT_URL, location);
 
         this.startActivity(intent);
-    }
-
-    // -----------------------------------------------------------------------
-    // Private
-    // -----------------------------------------------------------------------
-
-    private File createImageFile() throws IOException {
-        @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "img_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
 }
